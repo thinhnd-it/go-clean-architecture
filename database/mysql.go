@@ -2,21 +2,13 @@ package database
 
 import (
 	"fmt"
-	"log"
 	"os"
 
-	env "github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
 func ConnectToMySQL() (*gorm.DB, error) {
-	err := env.Load()
-
-	if err != nil {
-		log.Fatal("Error loading .env file ", err)
-	}
-
 	user := os.Getenv("DB_USERNAME")
 	password := os.Getenv("DB_PASSWORD")
 	host := os.Getenv("DB_HOST")
