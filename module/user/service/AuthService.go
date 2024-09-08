@@ -1,0 +1,92 @@
+package service
+
+import (
+	"context"
+	"errors"
+	contract "go-clean-architecture/module/user/contract/repository"
+	"go-clean-architecture/module/user/model"
+	"go-clean-architecture/module/user/request"
+	"go-clean-architecture/module/user/response"
+	"go-clean-architecture/utils"
+	"os"
+	"strconv"
+
+	"golang.org/x/crypto/bcrypt"
+)
+
+type AuthService struct {
+	userRepository contract.UserRepository
+}
+
+// public functions
+
+func NewAuthService(userRepository contract.UserRepository) *AuthService {
+	return &AuthService{
+		userRepository: userRepository,
+	}
+}
+
+func (s *AuthService) Signup(c context.Context, req *request.SignupRequest) (response.SignupResponse, error) {
+	_, err := s.GetUserByEmail(c, req.Email)
+
+	if err != nil {
+		return response.SignupResponse{}, errors.New("user already exists with the given email")
+	}
+
+	encryptedPassword, err := bcrypt.GenerateFromPassword(
+		[]byte(req.Password),
+		bcrypt.DefaultCost,
+	)
+
+	if err != nil {
+		return response.SignupResponse{}, err
+	}
+
+	req.Password = string(encryptedPassword)
+
+	user := model.User{
+		Username: req.Username,
+		Email:    req.Email,
+		Password: req.Password,
+	}
+
+	err = s.Create(c, &user)
+	if err != nil {
+		return response.SignupResponse{}, err
+	}
+
+	accessTokenExpiry, _ := strconv.Atoi(os.Getenv("ACCESS_TOKEN_EXPIRY_HOUR"))
+	refreshTokenExpiry, _ := strconv.Atoi(os.Getenv("REFRESH_TOKEN_EXPIRY_HOUR"))
+
+	accessToken, err := s.CreateAccessToken(&user, os.Getenv("ACCESS_TOKEN_SECRET"), accessTokenExpiry)
+	if err != nil {
+		return response.SignupResponse{}, err
+	}
+
+	refreshToken, err := s.CreateRefreshToken(&user, os.Getenv("ACCESS_TOKEN_SECRET"), refreshTokenExpiry)
+	if err != nil {
+		return response.SignupResponse{}, err
+	}
+
+	return response.SignupResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
+
+}
+
+func (s *AuthService) Create(c context.Context, user *model.User) error {
+	return s.userRepository.Create(c, user)
+}
+
+func (s *AuthService) GetUserByEmail(c context.Context, email string) (model.User, error) {
+	return s.userRepository.GetByEmail(c, email)
+}
+
+func (s *AuthService) CreateAccessToken(user *model.User, secret string, expiry int) (string, error) {
+	return utils.CreateAccessToken(user, secret, expiry)
+}
+
+func (s *AuthService) CreateRefreshToken(user *model.User, secret string, expiry int) (string, error) {
+	return utils.CreateRefereshToken(user, secret, expiry)
+}

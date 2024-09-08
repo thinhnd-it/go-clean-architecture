@@ -2,8 +2,12 @@ package main
 
 import (
 	"fmt"
+	"go-clean-architecture/api/route"
 	"go-clean-architecture/bootstrap"
+	"go-clean-architecture/module/user/model"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 func helloWorld(w http.ResponseWriter, r *http.Request) {
@@ -15,14 +19,11 @@ func main() {
 
 	db := app.DB
 
-	fmt.Println(db)
+	db.AutoMigrate(&model.User{})
 
-	http.HandleFunc("/", helloWorld)
-	fmt.Println("Server started at http://localhost:8080")
+	gin := gin.Default()
 
-	err := http.ListenAndServe(":8080", nil)
+	route.Setup(db, gin)
 
-	if err != nil {
-		fmt.Println("Error starting server:", err)
-	}
+	gin.Run()
 }
