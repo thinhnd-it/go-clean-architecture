@@ -6,7 +6,7 @@ import (
 )
 
 func Setup(db *gorm.DB, gin *gin.Engine) {
-	publicRouter := gin.Group("")
+	publicRouter := gin.Group("/api/v1")
 
 	// All Public APIs
 	NewAuthRouter(db, publicRouter)

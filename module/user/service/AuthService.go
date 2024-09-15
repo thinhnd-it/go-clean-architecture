@@ -72,11 +72,44 @@ func (s *AuthService) Signup(c context.Context, req *request.SignupRequest) (res
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil
+}
 
+func (s *AuthService) Login(c context.Context, req *request.LoginRequest) (response.LoginResponse, error) {
+	user, err := s.GetUserByUsernameOrEmail(c, req.UsernameOrEmail)
+
+	if err != nil {
+		return response.LoginResponse{}, errors.New("Your credentials was wrong")
+	}
+
+	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)) != nil {
+		return response.LoginResponse{}, errors.New("Your credentials was wrong")
+	}
+
+	accessTokenExpiry, _ := strconv.Atoi(os.Getenv("ACCESS_TOKEN_EXPIRY_HOUR"))
+	refreshTokenExpiry, _ := strconv.Atoi(os.Getenv("REFRESH_TOKEN_EXPIRY_HOUR"))
+
+	accessToken, err := s.CreateAccessToken(&user, os.Getenv("ACCESS_TOKEN_SECRET"), accessTokenExpiry)
+	if err != nil {
+		return response.LoginResponse{}, err
+	}
+
+	refreshToken, err := s.CreateRefreshToken(&user, os.Getenv("ACCESS_TOKEN_SECRET"), refreshTokenExpiry)
+	if err != nil {
+		return response.LoginResponse{}, err
+	}
+
+	return response.LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
 }
 
 func (s *AuthService) Create(c context.Context, user *model.User) error {
 	return s.userRepository.Create(c, user)
+}
+
+func (s *AuthService) GetUserByUsernameOrEmail(c context.Context, usernameOrEmail string) (model.User, error) {
+	return s.userRepository.GetByUsernameOrEmail(c, usernameOrEmail)
 }
 
 func (s *AuthService) GetUserByEmail(c context.Context, email string) (model.User, error) {

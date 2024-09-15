@@ -32,3 +32,23 @@ func (ac *AuthController) Signup(c *gin.Context) {
 
 	c.JSON(http.StatusOK, res)
 }
+
+func (ac *AuthController) Login(c *gin.Context) {
+	var req request.LoginRequest
+	var res response.LoginResponse
+
+	err := c.ShouldBind(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: err.Error()})
+		return
+	}
+
+	res, err = ac.AuthService.Login(c, &req)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}

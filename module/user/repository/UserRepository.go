@@ -37,6 +37,18 @@ func (r *userRepository) Fetch(c context.Context) ([]model.User, error) {
 	return users, nil
 }
 
+func (r *userRepository) GetByUsernameOrEmail(c context.Context, usernameOrEmail string) (model.User, error) {
+	var user model.User
+
+	if err := r.db.WithContext(c).Where("email = ?", usernameOrEmail).Or("username = ?", usernameOrEmail).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return model.User{}, nil
+		}
+		return model.User{}, err
+	}
+	return user, nil
+}
+
 func (r *userRepository) GetByEmail(c context.Context, email string) (model.User, error) {
 	var user model.User
 

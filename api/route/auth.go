@@ -17,4 +17,5 @@ func NewAuthRouter(db *gorm.DB, group *gin.RouterGroup) {
 	}
 
 	group.POST("/signup", c.Signup)
+	group.POST("/login", c.Login)
 }
