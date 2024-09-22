@@ -116,6 +116,16 @@ func (s *AuthService) GetUserByEmail(c context.Context, email string) (model.Use
 	return s.userRepository.GetByEmail(c, email)
 }
 
+func (s *AuthService) GetUserByID(c context.Context, userID string) (model.Profile, error) {
+	user, err := s.userRepository.GetByID(c, userID)
+
+	if err != nil {
+		return model.Profile{}, err
+	}
+
+	return model.Profile{Username: user.Username, Email: user.Email}, nil
+}
+
 func (s *AuthService) CreateAccessToken(user *model.User, secret string, expiry int) (string, error) {
 	return utils.CreateAccessToken(user, secret, expiry)
 }

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"go-clean-architecture/module/user/request"
 	"go-clean-architecture/module/user/response"
 	"go-clean-architecture/module/user/service"
@@ -51,4 +52,18 @@ func (ac *AuthController) Login(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, res)
+}
+
+func (ac *AuthController) Profile(c *gin.Context) {
+	userID := c.GetString("x-user-id")
+	fmt.Println(userID)
+
+	profile, err := ac.AuthService.GetUserByID(c, userID)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.ErrorResponse{Message: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, profile)
 }

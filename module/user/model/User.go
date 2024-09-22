@@ -8,3 +8,8 @@ type User struct {
 	Password string `gorm:"type:varchar(255);not null"`
 	gorm.Model
 }
+
+type Profile struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+}
